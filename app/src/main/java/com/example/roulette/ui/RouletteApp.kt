@@ -3,8 +3,13 @@ package com.example.roulette.ui
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -30,6 +35,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 private val BallSpinEasing = CubicBezierEasing(0.1f, 0.0f, 0.1f, 1.0f)
+private val RoseGold = Color(0xFFB08D57)
 
 sealed class SpinState {
     object Idle : SpinState()
@@ -41,10 +47,9 @@ sealed class SpinState {
 fun RouletteApp() {
     val coroutineScope     = rememberCoroutineScope()
     val wheelRotation      = remember { Animatable(0f) }
-    val ballAngleDeg       = remember { Animatable(-90f) }     // starts at 12 o'clock (screen coords)
-    val ballRadiusFraction = remember { Animatable(0.965f) }   // outer rim
+    val ballAngleDeg       = remember { Animatable(-90f) }
+    val ballRadiusFraction = remember { Animatable(0.965f) }
     var spinState          by remember { mutableStateOf<SpinState>(SpinState.Idle) }
-    // When true, ball is drawn on the rotating canvas at ballWheelAngleDeg (wheel-local coords)
     var ballInWheel        by remember { mutableStateOf(false) }
     var ballWheelAngleDeg  by remember { mutableStateOf(0f) }
 
@@ -62,20 +67,16 @@ fun RouletteApp() {
         if (spinState !is SpinState.Spinning) {
             coroutineScope.launch {
                 val sweepAngle           = 360f / 37f
-                val wheelDegPerSec       = 360f / 8f    // 45°/s clockwise
+                val wheelDegPerSec       = 360f / 8f
                 val spinDurationMs       = 4500
                 val spinDurationSec      = spinDurationMs / 1000f
 
-                // If ball is sitting in a wheel pocket, bring it back to the static
-                // canvas at its current visual screen position before orbiting.
                 if (ballInWheel) {
                     ballAngleDeg.snapTo(ballWheelAngleDeg + wheelRotation.value)
                     ballInWheel = false
                 }
                 ballRadiusFraction.snapTo(0.965f)
 
-                // Pick the winning pocket, then compute where it will be
-                // on-screen by the time the ball finishes its arc.
                 val targetIndex          = (0..36).random()
                 val wheelMoveDuringSpin  = wheelDegPerSec * spinDurationSec
                 val targetScreenAngle    = (
@@ -83,7 +84,6 @@ fun RouletteApp() {
                     wheelRotation.value + wheelMoveDuringSpin
                 ).mod(360f)
 
-                // Ball travels counterclockwise (decreasing angle) to land there.
                 val currentMod  = ballAngleDeg.value.mod(360f)
                 val ccwDelta    = (currentMod - targetScreenAngle).mod(360f)
                 val fullLaps    = (5..7).random()
@@ -91,7 +91,6 @@ fun RouletteApp() {
 
                 spinState = SpinState.Spinning
 
-                // Ball orbit — counterclockwise, decelerating
                 val ballJob = launch {
                     ballAngleDeg.animateTo(
                         targetValue = newBallAngle,
@@ -99,17 +98,15 @@ fun RouletteApp() {
                     )
                 }
 
-                // Drop ball inward during the final ~1.3 s of the spin
                 delay(3200)
                 ballRadiusFraction.animateTo(
-                    targetValue = 0.70f,  // centre of inner color band
+                    targetValue = 0.70f,
                     animationSpec = tween(durationMillis = 1300,
                                          easing = CubicBezierEasing(0.4f, 0f, 0.8f, 1f))
                 )
 
                 ballJob.join()
 
-                // Lock ball to the rotating wheel so it follows the sector.
                 ballWheelAngleDeg = ballAngleDeg.value - wheelRotation.value
                 ballInWheel = true
 
@@ -153,6 +150,7 @@ private fun ResultOverlay(number: Int, color: PocketColor, modifier: Modifier = 
     Column(
         modifier = modifier
             .background(Color.Black.copy(alpha = 0.65f), shape = CircleShape)
+            .border(2.dp, RoseGold, CircleShape)
             .padding(horizontal = 14.dp, vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -165,6 +163,16 @@ private fun ResultOverlay(number: Int, color: PocketColor, modifier: Modifier = 
 
 @Composable
 private fun HintText(modifier: Modifier = Modifier) {
+    val infiniteTransition = rememberInfiniteTransition(label = "hint")
+    val alpha by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 0.8f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "hintAlpha"
+    )
     Text(text = "TAP TO SPIN", style = MaterialTheme.typography.labelSmall,
-         color = Color.White.copy(alpha = 0.6f), modifier = modifier)
+         color = Color.White.copy(alpha = alpha), modifier = modifier)
 }
