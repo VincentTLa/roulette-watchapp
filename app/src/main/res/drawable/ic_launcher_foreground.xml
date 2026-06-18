@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Outer ring -->
+    <path
+        android:strokeColor="#B08D57"
+        android:strokeWidth="3"
+        android:fillColor="@android:color/transparent"
+        android:pathData="M54,14 A40,40 0 1,1 53.99,14 Z" />
+    <!-- Red sector -->
+    <path
+        android:fillColor="#B71C1C"
+        android:pathData="M54,54 L54,14 A40,40 0 0,1 88,74 Z" />
+    <!-- Black sector -->
+    <path
+        android:fillColor="#1A1A1A"
+        android:pathData="M54,54 L88,74 A40,40 0 0,1 20,74 Z" />
+    <!-- Green sector -->
+    <path
+        android:fillColor="#2E7D32"
+        android:pathData="M54,54 L20,74 A40,40 0 0,1 54,14 Z" />
+    <!-- Centre hub -->
+    <circle
+        android:fillColor="#B08D57"
+        android:cx="54"
+        android:cy="54"
+        android:r="7" />
+    <circle
+        android:fillColor="#0D0D0D"
+        android:cx="54"
+        android:cy="54"
+        android:r="4.5" />
+</vector>
