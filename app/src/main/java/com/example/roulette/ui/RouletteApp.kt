@@ -39,11 +39,14 @@ sealed class SpinState {
 
 @Composable
 fun RouletteApp() {
-    val coroutineScope    = rememberCoroutineScope()
-    val wheelRotation     = remember { Animatable(0f) }
-    val ballAngleDeg      = remember { Animatable(-90f) }      // starts at 12 o'clock
+    val coroutineScope     = rememberCoroutineScope()
+    val wheelRotation      = remember { Animatable(0f) }
+    val ballAngleDeg       = remember { Animatable(-90f) }     // starts at 12 o'clock (screen coords)
     val ballRadiusFraction = remember { Animatable(0.965f) }   // outer rim
-    var spinState by remember { mutableStateOf<SpinState>(SpinState.Idle) }
+    var spinState          by remember { mutableStateOf<SpinState>(SpinState.Idle) }
+    // When true, ball is drawn on the rotating canvas at ballWheelAngleDeg (wheel-local coords)
+    var ballInWheel        by remember { mutableStateOf(false) }
+    var ballWheelAngleDeg  by remember { mutableStateOf(0f) }
 
     // Continuous slow clockwise wheel rotation — always running
     LaunchedEffect(Unit) {
@@ -63,8 +66,13 @@ fun RouletteApp() {
                 val spinDurationMs       = 4500
                 val spinDurationSec      = spinDurationMs / 1000f
 
-                // Snap ball back to outer rim for the new spin
-                ballRadiusFraction.snapTo(0.965f)  // outer bezel rim
+                // If ball is sitting in a wheel pocket, bring it back to the static
+                // canvas at its current visual screen position before orbiting.
+                if (ballInWheel) {
+                    ballAngleDeg.snapTo(ballWheelAngleDeg + wheelRotation.value)
+                    ballInWheel = false
+                }
+                ballRadiusFraction.snapTo(0.965f)
 
                 // Pick the winning pocket, then compute where it will be
                 // on-screen by the time the ball finishes its arc.
@@ -101,6 +109,10 @@ fun RouletteApp() {
 
                 ballJob.join()
 
+                // Lock ball to the rotating wheel so it follows the sector.
+                ballWheelAngleDeg = ballAngleDeg.value - wheelRotation.value
+                ballInWheel = true
+
                 val number = EuropeanWheel.pocketOrder[targetIndex]
                 spinState  = SpinState.Result(number, EuropeanWheel.colorFor(number), targetIndex)
             }
@@ -112,6 +124,8 @@ fun RouletteApp() {
             wheelRotationDeg   = wheelRotation.value,
             ballAngleDeg       = ballAngleDeg.value,
             ballRadiusFraction = ballRadiusFraction.value,
+            ballInWheel        = ballInWheel,
+            ballWheelAngleDeg  = ballWheelAngleDeg,
             highlightIndex     = (spinState as? SpinState.Result)?.index,
             isSpinning         = spinState is SpinState.Spinning,
             onSpin             = onSpin,

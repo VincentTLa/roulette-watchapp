@@ -36,6 +36,8 @@ fun RouletteWheel(
     wheelRotationDeg: Float,
     ballAngleDeg: Float,
     ballRadiusFraction: Float,
+    ballInWheel: Boolean,
+    ballWheelAngleDeg: Float,
     highlightIndex: Int?,
     isSpinning: Boolean,
     onSpin: () -> Unit,
@@ -178,28 +180,38 @@ fun RouletteWheel(
             drawCircle(color = RoseGold,          radius = R * 0.055f, center = center)
             drawCircle(color = Color(0xFF1C1C1C), radius = R * 0.038f, center = center)
             drawCircle(color = RoseGold,          radius = R * 0.016f, center = center)
+
+            // 9. Ball on rotating canvas — drawn here when locked to a pocket
+            if (ballInWheel) {
+                val angleRad = Math.toRadians(ballWheelAngleDeg.toDouble())
+                val bx   = (center.x + R * ballRadiusFraction * cos(angleRad)).toFloat()
+                val by   = (center.y + R * ballRadiusFraction * sin(angleRad)).toFloat()
+                val ballR = R * 0.038f
+                drawCircle(color = Color.Black.copy(alpha = 0.45f), radius = ballR * 1.2f,
+                           center = Offset(bx + ballR * 0.35f, by + ballR * 0.35f))
+                drawCircle(color = Color.White, radius = ballR, center = Offset(bx, by))
+                drawCircle(color = Color.White.copy(alpha = 0.65f), radius = ballR * 0.32f,
+                           center = Offset(bx - ballR * 0.28f, by - ballR * 0.28f))
+            }
         }
 
-        // ── Static layer: ball orbits independently of wheel rotation ────────
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val R       = size.minDimension / 2f
-            val centerX = size.width / 2f
-            val centerY = size.height / 2f
-            val angleRad = Math.toRadians(ballAngleDeg.toDouble())
-            val bx = (centerX + R * ballRadiusFraction * cos(angleRad)).toFloat()
-            val by = (centerY + R * ballRadiusFraction * sin(angleRad)).toFloat()
-            val ballR = R * 0.038f
+        // ── Static layer: ball orbiting (only while not locked to wheel) ─────
+        if (!ballInWheel) {
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val R       = size.minDimension / 2f
+                val centerX = size.width / 2f
+                val centerY = size.height / 2f
+                val angleRad = Math.toRadians(ballAngleDeg.toDouble())
+                val bx = (centerX + R * ballRadiusFraction * cos(angleRad)).toFloat()
+                val by = (centerY + R * ballRadiusFraction * sin(angleRad)).toFloat()
+                val ballR = R * 0.038f
 
-            // Drop shadow
-            drawCircle(color = Color.Black.copy(alpha = 0.45f),
-                       radius = ballR * 1.2f,
-                       center = Offset(bx + ballR * 0.35f, by + ballR * 0.35f))
-            // Ball body
-            drawCircle(color = Color.White, radius = ballR, center = Offset(bx, by))
-            // Specular glint
-            drawCircle(color = Color.White.copy(alpha = 0.65f),
-                       radius = ballR * 0.32f,
-                       center = Offset(bx - ballR * 0.28f, by - ballR * 0.28f))
+                drawCircle(color = Color.Black.copy(alpha = 0.45f), radius = ballR * 1.2f,
+                           center = Offset(bx + ballR * 0.35f, by + ballR * 0.35f))
+                drawCircle(color = Color.White, radius = ballR, center = Offset(bx, by))
+                drawCircle(color = Color.White.copy(alpha = 0.65f), radius = ballR * 0.32f,
+                           center = Offset(bx - ballR * 0.28f, by - ballR * 0.28f))
+            }
         }
     }
 }
