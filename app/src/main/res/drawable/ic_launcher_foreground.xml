@@ -4,12 +4,6 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Outer ring -->
-    <path
-        android:strokeColor="#B08D57"
-        android:strokeWidth="3"
-        android:fillColor="@android:color/transparent"
-        android:pathData="M54,14 A40,40 0 1,1 53.99,14 Z" />
     <!-- Red sector -->
     <path
         android:fillColor="#B71C1C"
@@ -22,15 +16,18 @@
     <path
         android:fillColor="#2E7D32"
         android:pathData="M54,54 L20,74 A40,40 0 0,1 54,14 Z" />
-    <!-- Centre hub -->
-    <circle
+    <!-- Outer ring border (circle via two arcs) -->
+    <path
+        android:strokeColor="#B08D57"
+        android:strokeWidth="3"
+        android:fillColor="@android:color/transparent"
+        android:pathData="M14,54 A40,40 0 1,0 94,54 A40,40 0 1,0 14,54 Z" />
+    <!-- Centre hub gold (r=7) -->
+    <path
         android:fillColor="#B08D57"
-        android:cx="54"
-        android:cy="54"
-        android:r="7" />
-    <circle
+        android:pathData="M47,54 A7,7 0 1,0 61,54 A7,7 0 1,0 47,54 Z" />
+    <!-- Centre hub dark (r=4.5) -->
+    <path
         android:fillColor="#0D0D0D"
-        android:cx="54"
-        android:cy="54"
-        android:r="4.5" />
+        android:pathData="M49.5,54 A4.5,4.5 0 1,0 58.5,54 A4.5,4.5 0 1,0 49.5,54 Z" />
 </vector>
