@@ -64,7 +64,7 @@ fun RouletteApp() {
                 val spinDurationSec      = spinDurationMs / 1000f
 
                 // Snap ball back to outer rim for the new spin
-                ballRadiusFraction.snapTo(0.965f)
+                ballRadiusFraction.snapTo(0.965f)  // outer bezel rim
 
                 // Pick the winning pocket, then compute where it will be
                 // on-screen by the time the ball finishes its arc.
@@ -94,7 +94,7 @@ fun RouletteApp() {
                 // Drop ball inward during the final ~1.3 s of the spin
                 delay(3200)
                 ballRadiusFraction.animateTo(
-                    targetValue = 0.775f,
+                    targetValue = 0.70f,  // centre of inner color band
                     animationSpec = tween(durationMillis = 1300,
                                          easing = CubicBezierEasing(0.4f, 0f, 0.8f, 1f))
                 )
@@ -112,6 +112,7 @@ fun RouletteApp() {
             wheelRotationDeg   = wheelRotation.value,
             ballAngleDeg       = ballAngleDeg.value,
             ballRadiusFraction = ballRadiusFraction.value,
+            highlightIndex     = (spinState as? SpinState.Result)?.index,
             isSpinning         = spinState is SpinState.Spinning,
             onSpin             = onSpin,
             modifier           = Modifier.fillMaxSize()

@@ -1,12 +1,15 @@
 package com.example.roulette.ui
 
 import android.graphics.Paint
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -33,10 +36,24 @@ fun RouletteWheel(
     wheelRotationDeg: Float,
     ballAngleDeg: Float,
     ballRadiusFraction: Float,
+    highlightIndex: Int?,
     isSpinning: Boolean,
     onSpin: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val highlightAlpha = remember { Animatable(0f) }
+    LaunchedEffect(highlightIndex) {
+        if (highlightIndex != null) {
+            repeat(3) {
+                highlightAlpha.animateTo(0.38f, tween(300))
+                highlightAlpha.animateTo(0f, tween(300))
+            }
+        } else {
+            highlightAlpha.snapTo(0f)
+        }
+    }
+    val currentHighlight = highlightAlpha.value
+
     Box(
         modifier = modifier.clickable(
             enabled = !isSpinning,
@@ -53,14 +70,15 @@ fun RouletteWheel(
             val R            = size.minDimension / 2f
             val center       = Offset(size.width / 2f, size.height / 2f)
             val sweepAngle   = 360f / 37f
-            val outerSectorR = R * 0.93f
-            val innerSectorR = R * 0.62f
-            val labelR       = R * 0.775f
+            val outerSectorR = R * 0.93f   // outer edge of label ring
+            val splitR       = R * 0.775f  // boundary between label ring and color band
+            val innerSectorR = R * 0.62f   // inner edge of color band
+            val labelR       = R * 0.853f  // centre of label ring: (0.93 + 0.775) / 2
 
             // 1. Outer dark background
             drawCircle(color = OuterDark, radius = R, center = center)
 
-            // 2. Coloured sectors
+            // 2. Coloured sectors (full pie to outerSectorR; inner disc masks the centre)
             val arcTL   = Offset(center.x - outerSectorR, center.y - outerSectorR)
             val arcSize = Size(outerSectorR * 2f, outerSectorR * 2f)
             EuropeanWheel.pocketOrder.forEachIndexed { index, number ->
@@ -72,9 +90,19 @@ fun RouletteWheel(
                 }
                 drawArc(color = fillColor, startAngle = startAngle, sweepAngle = sweepAngle,
                         useCenter = true, topLeft = arcTL, size = arcSize)
+                // Highlight overlay on winning sector
+                if (index == highlightIndex && currentHighlight > 0f) {
+                    drawArc(color = Color.White.copy(alpha = currentHighlight),
+                            startAngle = startAngle, sweepAngle = sweepAngle,
+                            useCenter = true, topLeft = arcTL, size = arcSize)
+                }
             }
 
-            // 3. Outer ring border
+            // 3. Separator ring between label ring and color band
+            drawCircle(color = RoseGold, radius = splitR, center = center,
+                       style = Stroke(width = 1.5f))
+
+            // 4. Outer ring border
             drawCircle(color = RoseGold, radius = outerSectorR, center = center,
                        style = Stroke(width = 2.5f))
 
