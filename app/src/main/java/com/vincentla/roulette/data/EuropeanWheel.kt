@@ -1,4 +1,4 @@
-package com.example.roulette.data
+package com.vincentla.roulette.data
 
 enum class PocketColor { RED, BLACK, GREEN }
 

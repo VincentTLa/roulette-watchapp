@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.roulette"
+    namespace = "com.vincentla.roulette"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.roulette"
+        applicationId = "com.vincentla.roulette"
         minSdk = 30
         targetSdk = 35
         versionCode = 1

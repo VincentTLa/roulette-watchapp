@@ -1,4 +1,4 @@
-package com.example.roulette.ui
+package com.vincentla.roulette.ui
 
 import android.graphics.Paint
 import android.graphics.Typeface
@@ -21,8 +21,8 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.nativeCanvas
-import com.example.roulette.data.EuropeanWheel
-import com.example.roulette.data.PocketColor
+import com.vincentla.roulette.data.EuropeanWheel
+import com.vincentla.roulette.data.PocketColor
 import kotlin.math.cos
 import kotlin.math.sin
 

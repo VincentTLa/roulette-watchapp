@@ -1,4 +1,4 @@
-package com.example.roulette.ui
+package com.vincentla.roulette.ui
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
@@ -29,8 +29,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
-import com.example.roulette.data.EuropeanWheel
-import com.example.roulette.data.PocketColor
+import com.vincentla.roulette.data.EuropeanWheel
+import com.vincentla.roulette.data.PocketColor
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
