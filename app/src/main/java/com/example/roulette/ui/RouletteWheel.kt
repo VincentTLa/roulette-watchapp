@@ -1,21 +1,17 @@
 package com.example.roulette.ui
 
 import android.graphics.Paint
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.graphicsLayer
@@ -34,27 +30,13 @@ private val InnerDark   = Color(0xFF080808)
 
 @Composable
 fun RouletteWheel(
-    rotationDegrees: Float,
-    highlightIndex: Int?,
+    wheelRotationDeg: Float,
+    ballAngleDeg: Float,
+    ballRadiusFraction: Float,
     isSpinning: Boolean,
     onSpin: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val highlightAlpha = remember { Animatable(0f) }
-
-    LaunchedEffect(highlightIndex) {
-        if (highlightIndex != null) {
-            repeat(3) {
-                highlightAlpha.animateTo(0.4f, tween(300))
-                highlightAlpha.animateTo(0f, tween(300))
-            }
-        } else {
-            highlightAlpha.snapTo(0f)
-        }
-    }
-
-    val currentHighlight = highlightAlpha.value
-
     Box(
         modifier = modifier.clickable(
             enabled = !isSpinning,
@@ -62,26 +44,25 @@ fun RouletteWheel(
             interactionSource = remember { MutableInteractionSource() }
         ) { onSpin() }
     ) {
-        // ── Rotating wheel ──────────────────────────────────────────────────
+        // ── Rotating wheel disc ──────────────────────────────────────────────
         Canvas(
             modifier = Modifier
                 .fillMaxSize()
-                .graphicsLayer { rotationZ = rotationDegrees }
+                .graphicsLayer { rotationZ = wheelRotationDeg }
         ) {
             val R            = size.minDimension / 2f
             val center       = Offset(size.width / 2f, size.height / 2f)
             val sweepAngle   = 360f / 37f
-            val outerSectorR = R * 0.93f   // outer edge of number ring
-            val innerSectorR = R * 0.62f   // inner edge of number ring
-            val labelR       = R * 0.775f  // centre of label within ring
+            val outerSectorR = R * 0.93f
+            val innerSectorR = R * 0.62f
+            val labelR       = R * 0.775f
 
-            // 1. Outer dark background circle
+            // 1. Outer dark background
             drawCircle(color = OuterDark, radius = R, center = center)
 
-            // 2. Coloured sectors (full pie to outerSectorR; centre masked later)
+            // 2. Coloured sectors
             val arcTL   = Offset(center.x - outerSectorR, center.y - outerSectorR)
             val arcSize = Size(outerSectorR * 2f, outerSectorR * 2f)
-
             EuropeanWheel.pocketOrder.forEachIndexed { index, number ->
                 val startAngle = -90f - sweepAngle / 2f + index * sweepAngle
                 val fillColor = when (EuropeanWheel.colorFor(number)) {
@@ -89,30 +70,21 @@ fun RouletteWheel(
                     PocketColor.BLACK -> SectorBlack
                     PocketColor.GREEN -> SectorGreen
                 }
-                drawArc(
-                    color = fillColor, startAngle = startAngle,
-                    sweepAngle = sweepAngle, useCenter = true,
-                    topLeft = arcTL, size = arcSize
-                )
-                if (index == highlightIndex && currentHighlight > 0f) {
-                    drawArc(
-                        color = Color.White.copy(alpha = currentHighlight),
-                        startAngle = startAngle, sweepAngle = sweepAngle,
-                        useCenter = true, topLeft = arcTL, size = arcSize
-                    )
-                }
+                drawArc(color = fillColor, startAngle = startAngle, sweepAngle = sweepAngle,
+                        useCenter = true, topLeft = arcTL, size = arcSize)
             }
 
-            // 4. Outer ring border
+            // 3. Outer ring border
             drawCircle(color = RoseGold, radius = outerSectorR, center = center,
                        style = Stroke(width = 2.5f))
 
-            // 5. Diamond markers on outer bezel — one per sector, at sector midpoint
+            // 4. Diamond markers — one per sector, at sector midpoint angle
             val markerR    = R * 0.965f
             val markerSize = R * 0.028f
-            val markerFill = android.graphics.Color.argb(255, 176, 141, 87)
             val markerPaint = android.graphics.Paint().apply {
-                color = markerFill; style = android.graphics.Paint.Style.FILL; isAntiAlias = true
+                color = android.graphics.Color.argb(255, 176, 141, 87)
+                style = android.graphics.Paint.Style.FILL
+                isAntiAlias = true
             }
             for (i in 0 until 37) {
                 val midAngle = -90f + (i + 0.5f) * sweepAngle
@@ -135,7 +107,7 @@ fun RouletteWheel(
                 }
             }
 
-            // 6. Number labels — white bold, radial, dark outline for legibility
+            // 5. Number labels — white bold, radial, dark outline
             val textSize   = R * 0.115f
             val textOffset = textSize * 0.36f
             val labelPaint = Paint().apply {
@@ -165,38 +137,41 @@ fun RouletteWheel(
                 }
             }
 
-            // 7. Inner ring border (rose-gold, double ring)
+            // 6. Inner ring borders (double ring — matches reference)
             drawCircle(color = RoseGold, radius = innerSectorR + 4f, center = center,
                        style = Stroke(width = 1.5f))
             drawCircle(color = RoseGold, radius = innerSectorR,      center = center,
                        style = Stroke(width = 3f))
 
-            // 8. Inner dark disc — masks sector centres, creates the large centre area
+            // 7. Inner dark disc — masks sector centres, creates large dark area
             drawCircle(color = InnerDark, radius = innerSectorR - 2f, center = center)
 
-            // 9. Centre hub
-            drawCircle(color = RoseGold,        radius = R * 0.055f, center = center)
+            // 8. Centre hub (three concentric circles)
+            drawCircle(color = RoseGold,          radius = R * 0.055f, center = center)
             drawCircle(color = Color(0xFF1C1C1C), radius = R * 0.038f, center = center)
-            drawCircle(color = RoseGold,        radius = R * 0.016f, center = center)
+            drawCircle(color = RoseGold,          radius = R * 0.016f, center = center)
         }
 
-        // ── Static layer: ball marker at top (not rotated) ──────────────────
+        // ── Static layer: ball orbits independently of wheel rotation ────────
         Canvas(modifier = Modifier.fillMaxSize()) {
             val R       = size.minDimension / 2f
             val centerX = size.width / 2f
             val centerY = size.height / 2f
-            val ballR   = R * 0.038f
-            val ballY   = centerY - R * 0.965f + ballR
+            val angleRad = Math.toRadians(ballAngleDeg.toDouble())
+            val bx = (centerX + R * ballRadiusFraction * cos(angleRad)).toFloat()
+            val by = (centerY + R * ballRadiusFraction * sin(angleRad)).toFloat()
+            val ballR = R * 0.038f
 
-            // Ball shadow
-            drawCircle(color = Color.Black.copy(alpha = 0.5f),
-                       radius = ballR * 1.15f, center = Offset(centerX + ballR * 0.3f, ballY + ballR * 0.3f))
-            // Ball
-            drawCircle(color = Color.White, radius = ballR, center = Offset(centerX, ballY))
-            // Highlight glint
-            drawCircle(color = Color.White.copy(alpha = 0.7f),
-                       radius = ballR * 0.35f,
-                       center = Offset(centerX - ballR * 0.3f, ballY - ballR * 0.3f))
+            // Drop shadow
+            drawCircle(color = Color.Black.copy(alpha = 0.45f),
+                       radius = ballR * 1.2f,
+                       center = Offset(bx + ballR * 0.35f, by + ballR * 0.35f))
+            // Ball body
+            drawCircle(color = Color.White, radius = ballR, center = Offset(bx, by))
+            // Specular glint
+            drawCircle(color = Color.White.copy(alpha = 0.65f),
+                       radius = ballR * 0.32f,
+                       center = Offset(bx - ballR * 0.28f, by - ballR * 0.28f))
         }
     }
 }
