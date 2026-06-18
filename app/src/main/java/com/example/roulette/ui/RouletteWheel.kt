@@ -16,7 +16,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.foundation.Canvas
 import com.example.roulette.data.EuropeanWheel
 import com.example.roulette.data.PocketColor
@@ -103,18 +105,35 @@ fun RouletteWheel(
                 }
             }
 
-            // Sector divider lines
-            for (i in 0 until 37) {
-                val angleRad = Math.toRadians((-90.0 + i * sweepAngle))
-                drawLine(
-                    color = SectorBorder,
-                    start = center,
-                    end = Offset(
-                        x = (center.x + radius * cos(angleRad)).toFloat(),
-                        y = (center.y + radius * sin(angleRad)).toFloat()
-                    ),
-                    strokeWidth = 0.8f
-                )
+            // Number labels — drawn radially, rotated to face outward
+            val labelPaint = android.graphics.Paint().apply {
+                color = android.graphics.Color.WHITE
+                textAlign = android.graphics.Paint.Align.CENTER
+                textSize = radius * 0.10f
+                isFakeBoldText = true
+                isAntiAlias = true
+            }
+            val shadowPaint = android.graphics.Paint(labelPaint).apply {
+                color = android.graphics.Color.BLACK
+                style = android.graphics.Paint.Style.STROKE
+                strokeWidth = radius * 0.025f
+            }
+            val labelRadius = radius * 0.72f
+            val textOffset = labelPaint.textSize * 0.35f
+
+            EuropeanWheel.pocketOrder.forEachIndexed { index, number ->
+                val midAngle = -90f + index * sweepAngle
+                val midAngleRad = Math.toRadians(midAngle.toDouble())
+                val lx = (center.x + labelRadius * cos(midAngleRad)).toFloat()
+                val ly = (center.y + labelRadius * sin(midAngleRad)).toFloat()
+                drawIntoCanvas { canvas ->
+                    canvas.nativeCanvas.save()
+                    canvas.nativeCanvas.translate(lx, ly)
+                    canvas.nativeCanvas.rotate(midAngle + 90f)
+                    canvas.nativeCanvas.drawText(number.toString(), 0f, textOffset, shadowPaint)
+                    canvas.nativeCanvas.drawText(number.toString(), 0f, textOffset, labelPaint)
+                    canvas.nativeCanvas.restore()
+                }
             }
 
             // Outer rim circle
