@@ -103,19 +103,6 @@ fun RouletteWheel(
                 }
             }
 
-            // 3. Thin separator lines — ring band only (innerSectorR → outerSectorR)
-            for (i in 0 until 37) {
-                val rad = Math.toRadians((-90.0 + i * sweepAngle))
-                drawLine(
-                    color = RoseGold.copy(alpha = 0.55f),
-                    start = Offset((center.x + innerSectorR * cos(rad)).toFloat(),
-                                   (center.y + innerSectorR * sin(rad)).toFloat()),
-                    end   = Offset((center.x + outerSectorR * cos(rad)).toFloat(),
-                                   (center.y + outerSectorR * sin(rad)).toFloat()),
-                    strokeWidth = 1.2f
-                )
-            }
-
             // 4. Outer ring border
             drawCircle(color = RoseGold, radius = outerSectorR, center = center,
                        style = Stroke(width = 2.5f))
@@ -149,7 +136,7 @@ fun RouletteWheel(
             }
 
             // 6. Number labels — white bold, radial, dark outline for legibility
-            val textSize   = R * 0.145f
+            val textSize   = R * 0.115f
             val textOffset = textSize * 0.36f
             val labelPaint = Paint().apply {
                 color = android.graphics.Color.WHITE
@@ -160,7 +147,7 @@ fun RouletteWheel(
             val outlinePaint = Paint(labelPaint).apply {
                 color = android.graphics.Color.BLACK
                 style = Paint.Style.STROKE
-                strokeWidth = textSize * 0.22f
+                strokeWidth = textSize * 0.12f
                 strokeJoin = android.graphics.Paint.Join.ROUND
             }
             EuropeanWheel.pocketOrder.forEachIndexed { index, number ->
