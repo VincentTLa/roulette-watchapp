@@ -26,10 +26,11 @@ import com.vincentla.roulette.data.PocketColor
 import kotlin.math.cos
 import kotlin.math.sin
 
-private val SectorRed   = Color(0xFFB71C1C)
+private val SectorRed   = Color(0xFFC8102E)  // baize red, not Material brick
 private val SectorBlack = Color(0xFF1A1A1A)
-private val SectorGreen = Color(0xFF2E7D32)
-private val RoseGold    = Color(0xFFB08D57)
+private val SectorGreen = Color(0xFF1B5E3A)  // deep casino baize, not Material green
+private val RoseGold    = Color(0xFFB08D57)  // signature metal — zero, hub, pointer only
+private val Steel       = Color(0xFF3A3A3A)  // neutral structure: rings + frets
 
 @Composable
 fun RouletteWheel(
@@ -105,14 +106,14 @@ fun RouletteWheel(
                 }
             }
 
-            // 3. Gold outline accent on green pocket (index 0)
+            // 3. Gold outline accent on green pocket (index 0) — the one meaningful pocket
             drawArc(
                 color = RoseGold,
                 startAngle = -90f - sweepAngle / 2f,
                 sweepAngle = sweepAngle,
                 useCenter = false,
                 topLeft = arcTL, size = arcSize,
-                style = Stroke(width = 4f)
+                style = Stroke(width = 5f)
             )
 
             // 4. Sector depth overlay — pseudo-3D dome effect
@@ -129,16 +130,16 @@ fun RouletteWheel(
             )
 
             // 5. Separator ring
-            drawCircle(color = RoseGold, radius = splitR, center = center, style = Stroke(1.5f))
+            drawCircle(color = Steel, radius = splitR, center = center, style = Stroke(1.5f))
 
             // 6. Outer ring border
-            drawCircle(color = RoseGold, radius = outerSectorR, center = center, style = Stroke(2.5f))
+            drawCircle(color = Steel, radius = outerSectorR, center = center, style = Stroke(2.5f))
 
             // 7. Diamond markers — one per sector
             val markerR    = R * 0.965f
             val markerSize = R * 0.028f
             val markerPaint = android.graphics.Paint().apply {
-                color = android.graphics.Color.argb(255, 176, 141, 87)
+                color = android.graphics.Color.argb(255, 110, 110, 110)
                 style = android.graphics.Paint.Style.FILL
                 isAntiAlias = true
             }
@@ -195,8 +196,8 @@ fun RouletteWheel(
             }
 
             // 9. Inner ring borders (double ring)
-            drawCircle(color = RoseGold, radius = innerSectorR + 4f, center = center, style = Stroke(1.5f))
-            drawCircle(color = RoseGold, radius = innerSectorR,      center = center, style = Stroke(3f))
+            drawCircle(color = Steel, radius = innerSectorR + 4f, center = center, style = Stroke(1.5f))
+            drawCircle(color = Steel, radius = innerSectorR,      center = center, style = Stroke(3f))
 
             // 10. Inner disc — vignette gradient (lighter near ring, very dark center)
             drawCircle(
@@ -249,6 +250,37 @@ fun RouletteWheel(
                 drawCircle(color = Color.White, radius = ballR, center = Offset(bx, by))
                 drawCircle(color = Color.White.copy(alpha = 0.65f), radius = ballR * 0.32f,
                            center = Offset(bx - ballR * 0.28f, by - ballR * 0.28f))
+            }
+        }
+
+        // ── Fixed pointer at 12 o'clock — the marker the result is read against ──
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val R       = size.minDimension / 2f
+            val centerX = size.width / 2f
+            val tipY    = (size.height / 2f) - R * 0.92f   // tip just inside the sectors
+            val halfW   = R * 0.05f
+            val baseY   = (size.height / 2f) - R * 1.0f     // base out at the bezel
+            val tri = android.graphics.Path().apply {
+                moveTo(centerX, tipY)              // point inward
+                lineTo(centerX - halfW, baseY)
+                lineTo(centerX + halfW, baseY)
+                close()
+            }
+            drawIntoCanvas { canvas ->
+                val edge = android.graphics.Paint().apply {
+                    color = android.graphics.Color.argb(255, 8, 8, 8)
+                    style = android.graphics.Paint.Style.STROKE
+                    strokeWidth = R * 0.018f
+                    strokeJoin = android.graphics.Paint.Join.ROUND
+                    isAntiAlias = true
+                }
+                val fill = android.graphics.Paint().apply {
+                    color = android.graphics.Color.argb(255, 176, 141, 87)  // RoseGold
+                    style = android.graphics.Paint.Style.FILL
+                    isAntiAlias = true
+                }
+                canvas.nativeCanvas.drawPath(tri, edge)
+                canvas.nativeCanvas.drawPath(tri, fill)
             }
         }
     }

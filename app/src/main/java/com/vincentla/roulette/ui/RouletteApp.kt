@@ -2,7 +2,6 @@ package com.vincentla.roulette.ui
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -34,7 +33,8 @@ import com.vincentla.roulette.data.PocketColor
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-private val BallSpinEasing = CubicBezierEasing(0.1f, 0.0f, 0.1f, 1.0f)
+private val BallSpinEasing  = CubicBezierEasing(0.1f, 0.0f, 0.1f, 1.0f)
+private val WheelSpinEasing = CubicBezierEasing(0.0f, 0.0f, 0.2f, 1.0f)  // ease-out: decelerate to rest
 private val RoseGold = Color(0xFFB08D57)
 
 sealed class SpinState {
@@ -53,16 +53,7 @@ fun RouletteApp() {
     var ballInWheel        by remember { mutableStateOf(false) }
     var ballWheelAngleDeg  by remember { mutableStateOf(0f) }
 
-    // Continuous slow clockwise wheel rotation — always running
-    LaunchedEffect(Unit) {
-        while (true) {
-            wheelRotation.animateTo(
-                targetValue = wheelRotation.value + 360f,
-                animationSpec = tween(durationMillis = 8000, easing = LinearEasing)
-            )
-        }
-    }
-
+    // ponytail: wheel rests at idle (battery + OLED burn-in); it only turns during a spin.
     val onSpin: () -> Unit = {
         if (spinState !is SpinState.Spinning) {
             coroutineScope.launch {
@@ -91,6 +82,15 @@ fun RouletteApp() {
 
                 spinState = SpinState.Spinning
 
+                // Wheel turns clockwise during the spin only, advancing exactly the
+                // amount the targeting math above accounts for, then rests again.
+                val wheelJob = launch {
+                    wheelRotation.animateTo(
+                        targetValue = wheelRotation.value + wheelMoveDuringSpin,
+                        animationSpec = tween(durationMillis = spinDurationMs, easing = WheelSpinEasing)
+                    )
+                }
+
                 val ballJob = launch {
                     ballAngleDeg.animateTo(
                         targetValue = newBallAngle,
@@ -106,6 +106,7 @@ fun RouletteApp() {
                 )
 
                 ballJob.join()
+                wheelJob.join()
 
                 ballWheelAngleDeg = ballAngleDeg.value - wheelRotation.value
                 ballInWheel = true
